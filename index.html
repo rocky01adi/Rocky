@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameZone Arcade</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#090d1b;color:white;
+ font-family:Arial,sans-serif;text-align:center
+}
+header{
+ padding:20px;background:#151d35;
+ color:#45e6e0;font-size:26px;font-weight:bold
+}
+.hero{padding:30px 15px}
+.hero h1{font-size:35px}
+.hero p{color:#b8c4e8}
+#search{
+ padding:13px;width:85%;max-width:450px;
+ border-radius:9px;border:0;margin:15px
+}
+.games{
+ display:grid;grid-template-columns:repeat(2,1fr);
+ gap:15px;max-width:750px;margin:20px auto;padding:15px
+}
+.card{
+ background:#151d35;padding:20px;
+ border-radius:15px;border:1px solid #293858
+}
+.card .emoji{font-size:45px}
+.card h3{margin:10px}
+button{
+ padding:12px 20px;border:0;border-radius:8px;
+ background:#45e6e0;color:#08101d;
+ font-weight:bold;cursor:pointer;margin:5px
+}
+button:disabled{opacity:.4}
+#gameArea{
+ display:none;max-width:650px;margin:20px auto;
+ padding:20px;background:#151d35;border-radius:15px
+}
+#gameArea canvas{
+ max-width:100%;background:#080c19;border-radius:10px
+}
+#gameArea input{padding:10px}
+#status{color:#b8c4e8}
+#score{color:#ffd36a;font-size:20px}
+@media(max-width:450px){
+ .games{gap:9px;padding:9px}
+ .card{padding:12px}
+ .card .emoji{font-size:35px}
+}
+</style>
+</head>
+
+<body>
+
+<header>🎮 GAMEZONE</header>
+
+<section class="hero">
+<h1>PLAY MORE. WORRY LESS.</h1>
+<p>Welcome to your free gaming world!</p>
+<input id="search" placeholder="Search games..." oninput="searchGames()">
+</section>
+
+<div class="games" id="games">
+
+<div class="card" data-name="snake">
+<div class="emoji">🐍</div>
+<h3>Snake</h3>
+<button onclick="startGame('snake')">PLAY</button>
+</div>
+
+<div class="card" data-name="tic tac toe">
+<div class="emoji">⭕</div>
+<h3>Tic Tac Toe</h3>
+<button onclick="startGame('tic')">PLAY</button>
+</div>
+
+<div class="card" data-name="memory match">
+<div class="emoji">🧠</div>
+<h3>Memory Match</h3>
+<button onclick="startGame('memory')">PLAY</button>
+</div>
+
+<div class="card" data-name="pong">
+<div class="emoji">🏓</div>
+<h3>Pong</h3>
+<button onclick="startGame('pong')">PLAY</button>
+</div>
+
+<div class="card" data-name="brick breaker">
+<div class="emoji">🧱</div>
+<h3>Brick Breaker</h3>
+<button onclick="startGame('brick')">PLAY</button>
+</div>
+
+<div class="card" data-name="2048">
+<div class="emoji">🔢</div>
+<h3>2048</h3>
+<button onclick="startGame('2048')">PLAY</button>
+</div>
+
+<div class="card" data-name="sky pilot">
+<div class="emoji">✈️</div>
+<h3>Sky Pilot</h3>
+<button onclick="startGame('sky')">PLAY</button>
+</div>
+
+<div class="card" data-name="rocket rush">
+<div class="emoji">🚀</div>
+<h3>Rocket Rush</h3>
+<button onclick="startGame('rocket')">PLAY</button>
+</div>
+
+<div class="card" data-name="deep dive">
+<div class="emoji">🤿</div>
+<h3>Deep Dive</h3>
+<button onclick="startGame('deep')">PLAY</button>
+</div>
+
+</div>
+
+<div id="gameArea">
+<h2 id="gameTitle">Game</h2>
+<div id="gameContent"></div>
+<p id="status">Ready to play?</p>
+<p id="score">Score: 0</p>
+<button onclick="closeGame()">BACK TO GAMES</button>
+</div>
+
+<script>
+let timer=null,animation=null,points=0;
+
+function searchGames(){
+ let q=document.getElementById("search").value.toLowerCase();
+ document.querySelectorAll(".card").forEach(card=>{
+  card.style.display=card.dataset.name.includes(q)?"block":"none";
+ });
+}
+
+function startGame(type){
+ clearInterval(timer);
+ cancelAnimationFrame(animation);
+
+ document.getElementById("games").style.display="none";
+ document.getElementById("gameArea").style.display="block";
+
+ let content=document.getElementById("gameContent");
+ let title=document.getElementById("gameTitle");
+ let status=document.getElementById("status");
+ let score=document.getElementById("score");
+
+ points=0;score.textContent="Score: 0";
+ content.innerHTML="";
+
+ if(type==="sky"||type==="rocket"||type==="deep"){
+  flightGame(type);return;
+ }
+
+ if(type==="tic"){
+  title.textContent="⭕ TIC TAC TOE";
+  let board=Array(9).fill("");
+  let turn="X",done=false;
+  content.innerHTML='<div id="board" style="display:grid;grid-template-columns:repeat(3,75px);gap:6px;justify-content:center"></div><button onclick="startGame(\'tic\')">RESTART</button>';
+  function draw(){
+   let b=document.getElementById("board");b.innerHTML="";
+   board.forEach((v,i)=>{
+    let btn=document.createElement("button");
+    btn.style.height="75px";btn.style.fontSize="25px";
+    btn.textContent=v;
+    btn.onclick=()=>{
+     if(v||done)return;
+     board[i]=turn;
+     let lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+     if(lines.some(l=>l.every(n=>board[n]===turn))){
+      status.textContent=turn+" WINS!";done=true;
+     }else if(board.every(Boolean)){
+      status.textContent="DRAW!";done=true;
+     }else{
+      turn=turn==="X"?"O":"X";
+      status.textContent=turn+"'s turn";
+     }
+     draw();
+    };
+    b.appendChild(btn);
+   });
+  }
+  status.textContent="X's turn";draw();return;
+ }
+
+ if(type==="memory"){
+  title.textContent="🧠 MEMORY MATCH";
+  let symbols=["🍎","🚀","🐼","🎸","🌟","🍕","🐸","⚽"];
+  let cards=[...symbols,...symbols].sort(()=>Math.random()-.5);
+  let opened=[],matched=0,moves=0;
+  content.innerHTML='<div id="memory" style="display:grid;grid-template-columns:repeat(4,60px);gap:7px;justify-content:center"></div>';
+  function draw(){
+   let box=document.getElementById("memory");box.innerHTML="";
+   cards.forEach((v,i)=>{
+    let b=document.createElement("button");
+    b.style.width="60px";b.style.height="60px";
+    b.textContent=opened.includes(i)||v===""?v||"✓":"?";
+    b.onclick=()=>{
+     if(opened.length===2||opened.includes(i)||v==="")return;
+     opened.push(i);draw();
+     if(opened.length===2){
+      moves++;
+      if(cards[opened[0]]===cards[opened[1]]){
+       cards[opened[0]]=cards[opened[1]]="";
+       matched++;opened=[];
+      }
+      setTimeout(()=>{opened=[];draw();status.textContent="Moves: "+moves+" | Pairs: "+matched+"/8";},600);
+     }
+    };
+    box.appendChild(b);
+   });
+  }
+  draw();status.textContent="Find all matching pairs!";return;
+ }
+
+ if(type==="2048"){
+  title.textContent="🔢 2048";
+  let a=Array(16).fill(0);
+  content.innerHTML='<div id="tiles" style="display:grid;grid-template-columns:repeat(4,60px);gap:5px;justify-content:center"></div><p>Use arrow keys to move tiles.</p><button onclick="startGame(\'2048\')">RESTART</button>';
+  function add(){
+   let empty=a.map((v,i)=>v?null:i).filter(v=>v!==null);
+   if(empty.length)a[empty[Math.floor(Math.random()*empty.length)]]=2;
+  }
+  function draw(){
+   document.getElementById("tiles").innerHTML=a.map(v=>'<div style="height:60px;background:#293858;border-radius:6px;display:grid;place-items:center;font-weight:bold">'+(v||"")+'</div>').join("");
+  }
+  function move(direction){
+   for(let n=0;n<4;n++){
+    let ids=[];
+    for(let k=0;k<4;k++){
+     ids.push(direction==="left"?n*4+k:
+     direction==="right"?n*4+3-k:
+     direction==="up"?k*4+n:(3-k)*4+n);
+    }
+    let vals=ids.map(i=>a[i]).filter(Boolean),out=[];
+    for(let j=0;j<vals.length;j++){
+     if(vals[j]===vals[j+1]){out.push(vals[j]*2);j++;}
+     else out.push(vals[j]);
+    }
+    while(out.length<4)out.push(0);
+    ids.forEach((id,j)=>a[id]=out[j]);
+   }
+   add();draw();
+  }
+  function key(e){
+   let d={ArrowLeft:"left",ArrowRight:"right",ArrowUp:"up",ArrowDown:"down"}[e.key];
+   if(d){e.preventDefault();move(d);}
+  }
+  window.addEventListener("keydown",key);
+  cleanup=()=>window.removeEventListener("keydown",key);
+  add();add();draw();return;
+ }
+
+ if(type==="snake"){
+  title.textContent="🐍 SNAKE";
+  content.innerHTML='<canvas id="canvas" width="300" height="240"></canvas><p>Use arrow keys</p>';
+  let c=document.getElementById("canvas"),ctx=c.getContext("2d");
+  let snake=[{x:5,y:5}],dir={x:1,y:0};
+  let food={x:10,y:8};
+  function key(e){
+   let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];
+   if(d&&!(d[0]===-dir.x&&d[1]===-dir.y))dir={x:d[0],y:d[1]};
+  }
+  window.addEventListener("keydown",key);
+  cleanup=()=>window.removeEventListener("keydown",key);
+  timer=setInterval(()=>{
+   let head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+   if(head.x<0||head.y<0||head.x>=20||head.y>=16||snake.some(p=>p.x===head.x&&p.y===head.y)){
+    clearInterval(timer);status.textContent="Game over!";return;
+   }
+   snake.unshift(head);
+   if(head.x===food.x&&head.y===food.y){
+    points++;score.textContent="Score: "+points;
+    food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*16)};
+   }else snake.pop();
+   ctx.fillStyle="#080c19";ctx.fillRect(0,0,300,240);
+   ctx.fillStyle="#ff4f9a";ctx.fillRect(food.x*15,food.y*15,14,14);
+   ctx.fillStyle="#45e6e0";
+   snake.forEach(p=>ctx.fillRect(p.x*15,p.y*15,14,14));
+  },130);
+  return;
+ }
+
+ if(type==="pong"||type==="brick"){
+  title.textContent=type==="pong"?"🏓 PONG":"🧱 BRICK BREAKER";
+  content.innerHTML='<canvas id="canvas" width="360" height="240"></canvas><p>Move your pointer over the game to control the paddle.</p>';
+  let c=document.getElementById("canvas"),ctx=c.getContext("2d");
+  let px=140,x=180,y=100,vx=3,vy=3;
+  function move(e){let r=c.getBoundingClientRect();px=(e.clientX-r.left)*360/r.width-40;}
+  c.addEventListener("pointermove",move);
+  cleanup=()=>c.removeEventListener("pointermove",move);
+  let bricks=Array.from({length:18},(_,i)=>({x:8+(i%6)*58,y:15+Math.floor(i/6)*22,on:true}));
+  function loop(){
+   x+=vx;y+=vy;
+   if(x<5||x>355)vx*=-1;
+   if(y<5)vy*=-1;
+   if(y>210&&x>px&&x<px+80)vy=-Math.abs(vy);
+   if(y>240){x=180;y=100;vy=-3;}
+   if(type==="brick"){
+    bricks.forEach(b=>{
+     if(b.on&&x>b.x&&x<b.x+48&&y>b.y&&y<b.y+15){b.on=false;vy*=-1;points++;score.textContent="Score: "+points;}
+    });
+   }else if(x<10||x>350){points++;score.textContent="Score: "+points;}
+   ctx.fillStyle="#080c19";ctx.fillRect(0,0,360,240);
+   ctx.fillStyle="#45e6e0";ctx.fillRect(px,220,80,8);
+   ctx.fillStyle="#ff4f9a";
+   bricks.forEach(b=>{if(b.on)ctx.fillRect(b.x,b.y,48,15)});
+   ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fillStyle="white";ctx.fill();
+   animation=requestAnimationFrame(loop);
+  }
+  loop();return;
+ }
+}
+
+let cleanup=()=>{};
+
+function flightGame(type){
+ let names={sky:"✈️ SKY PILOT",rocket:"🚀 ROCKET RUSH",deep:"🤿 DEEP DIVE"};
+ document.getElementById("gameTitle").textContent=names[type];
+ let content=document.getElementById("gameContent");
+ content.innerHTML='<div style="font-size:65px" id="vehicle">'+(type==="sky"?"✈️":type==="rocket"?"🚀":"🤿")+'</div><h1 id="multiplier">1.00x</h1><button id="start">START ROUND</button><button id="collect" disabled>COLLECT SCORE</button>';
+ let mult=1,active=false,start=0,limit=0;
+ let status=document.getElementById("status");
+ let score=document.getElementById("score");
+ function stop(){active=false;cancelAnimationFrame(animation);document.getElementById("collect").disabled=true;document.getElementById("start").disabled=false;}
+ function frame(now){
+  if(!active)return;
+  mult=1+(now-start)/5000;
+  document.getElementById("multiplier").textContent=mult.toFixed(2)+"x";
+  if(now>=limit){stop();status.textContent="Round ended! Try again.";return;}
+  animation=requestAnimationFrame(frame);
+ }
+ document.getElementById("start").onclick=()=>{
+  if(active)return;
+  active=true;start=performance.now();limit=start+2500+Math.random()*4000;
+  status.textContent="Round in progress!";
+  document.getElementById("start").disabled=true;
+  document.getElementById("collect").disabled=false;
+  animation=requestAnimationFrame(frame);
+ };
+ document.getElementById("collect").onclick=()=>{
+  if(!active)return;
+  points+=Math.floor(mult*100);
+  score.textContent="Score: "+points;
+  status.textContent="Score collected!";
+  stop();
+ };
+ cleanup=()=>{active=false;cancelAnimationFrame(animation);};
+}
+
+function closeGame(){
+ clearInterval(timer);cancelAnimationFrame(animation);cleanup();
+ document.getElementById("gameArea").style.display="none";
+ document.getElementById("games").style.display="grid";
+ document.getElementById("status").textContent="Ready to play?";
+}
+</script>
+</body>
+</html>
